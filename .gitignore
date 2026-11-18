@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local environment / secrets
+.env
+.venv/
+
+# Generated vector index (rebuild with ingest.py)
+data/
+data/index/
+
+# Tooling
+.pytest_cache/
+.idea/
+.vscode/

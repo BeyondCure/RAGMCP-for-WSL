@@ -1,0 +1,15 @@
+# MCP server
+mcp[cli]>=2.3
+
+# RAG core
+chromadb>=1.5,<2
+langchain-text-splitters>=1.0
+sentence-transformers>=6.0
+
+# Document parsing
+pypdf>=5
+python-docx>=1.1
+
+# Configuration
+pydantic-settings>=2
+python-dotenv>=1
