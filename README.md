@@ -6,6 +6,8 @@
 
 A local RAG + MCP service that builds a vector index over your knowledge base (Markdown, text, and other documents) and exposes retrieval tools over the Model Context Protocol (MCP). By default it runs persistently in WSL over streamable HTTP, and MCP clients on both Windows and WSL can connect.
 
+More precisely, this project is a demo framework/template intended to help you understand how a RAG + MCP service is put together. Using it in practice will usually require some customization or further development for your own corpus and requirements.
+
 ## Quick Start
 
 ### 1. Create the environment
@@ -44,7 +46,7 @@ The repository does not include documents or the index. Put your Markdown/PDF/DO
 python ingest.py data/raw/your-docs --collection mydocs --reset
 ```
 
-Then set `MCP_DEFAULT_COLLECTION=mydocs` in `.env`.
+Then call `search_knowledge` with `collection="mydocs"` (or add a dedicated tool for that corpus).
 
 ### 5. Start the server
 
@@ -75,7 +77,8 @@ Windows access to the WSL service relies on localhost forwarding. If it does not
 
 | Tool | Arguments | Description |
 | --- | --- | --- |
-| `search_knowledge` | `query`, `top_k=5`, `collection="neoforge"` | Search documents and return Markdown passages with source and heading path |
+| `search_neoforge_1_21_1_dev_docs` | `query`, `top_k=5` | Search the NeoForge 1.21.1 developer docs (fixed to the `neoforge` collection) |
+| `search_knowledge` | `query`, `top_k=5`, `collection="neoforge"` | Generic search across collections; useful as a template for other corpora |
 | `list_collections` | None | List collections with chunk counts, document counts, and heading coverage |
 
 `top_k` is capped by `MCP_MAX_TOP_K=10`; chunks are returned in full by default (no truncation).
@@ -111,7 +114,6 @@ Ingestion semantics:
 | `MCP_TRANSPORT` | `streamable-http` | `streamable-http` / `stdio` |
 | `MCP_HOST` | `127.0.0.1` | HTTP bind address |
 | `MCP_PORT` | `8000` | HTTP port |
-| `MCP_DEFAULT_COLLECTION` | `neoforge` | Default collection for MCP tools |
 | `MCP_PRELOAD` | `true` | Load and warm up the model at startup |
 | `MCP_MAX_TOP_K` | `10` | Maximum number of results |
 | `MCP_MAX_RESULT_CHARS` | `0` | 0 means no truncation |

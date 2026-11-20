@@ -6,6 +6,8 @@
 
 一个本地 RAG + MCP 服务：把提供的知识库（markdown文档、text文档等）建立向量索引，通过 MCP 协议对外提供检索工具。默认在 WSL 中以 streamable-HTTP 常驻，Windows 和 WSL 的 MCP 客户端都可以连接。
 
+更准确地说，本项目是一个演示框架/模板，旨在帮助大家理解一个 RAG + MCP 服务的整体结构；实际使用时，通常需要针对自己的语料和需求做一定的自定义或二次开发。
+
 ## 快速开始
 
 ### 1. 创建环境
@@ -44,7 +46,7 @@ HF_HUB_OFFLINE=0 python -c \
 python ingest.py data/raw/your-docs --collection mydocs --reset
 ```
 
-然后在 `.env` 里设置 `MCP_DEFAULT_COLLECTION=mydocs`。
+之后调用 `search_knowledge` 时传 `collection="mydocs"`（或为它新增专用工具）。
 
 ### 5. 启动服务
 
@@ -75,7 +77,8 @@ Windows 访问 WSL 服务依赖 localhost 转发。如果连不上，在 `.env` 
 
 | 工具 | 参数 | 说明 |
 | --- | --- | --- |
-| `search_knowledge` | `query`，`top_k=5`，`collection="neoforge"` | 检索文档，返回带来源和标题路径的 Markdown 片段 |
+| `search_neoforge_1_21_1_dev_docs` | `query`，`top_k=5` | 搜索 NeoForge 1.21.1 开发文档（固定 `neoforge` collection） |
+| `search_knowledge` | `query`，`top_k=5`，`collection="neoforge"` | 泛用检索，可指定其他 collection，也可作为模板 |
 | `list_collections` | 无 | 列出 collection、chunk 数、文档数和标题覆盖 |
 
 `top_k` 上限由 `MCP_MAX_TOP_K=10` 控制；默认完整返回 chunk，不截断。
@@ -111,7 +114,6 @@ python ingest.py data/raw/NeoForge-version-1.21.1 --collection neoforge --reset
 | `MCP_TRANSPORT` | `streamable-http` | `streamable-http` / `stdio` |
 | `MCP_HOST` | `127.0.0.1` | HTTP 监听地址 |
 | `MCP_PORT` | `8000` | HTTP 端口 |
-| `MCP_DEFAULT_COLLECTION` | `neoforge` | MCP 工具默认 collection |
 | `MCP_PRELOAD` | `true` | 启动时加载并 warmup 模型 |
 | `MCP_MAX_TOP_K` | `10` | 检索数量上限 |
 | `MCP_MAX_RESULT_CHARS` | `0` | 0 表示不截断结果 |
