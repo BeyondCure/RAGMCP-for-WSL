@@ -31,7 +31,11 @@ class Reranker:
     def rerank(self, query: str, hits: list[SearchHit]) -> list[SearchHit]:
         if not hits:
             return hits
-        scores = self._model.predict([(query, hit.text) for hit in hits])
+        scores = self._model.predict(
+            [(query, hit.text) for hit in hits],
+            batch_size=8,
+            show_progress_bar=False,
+        )
         ranked = sorted(zip(hits, scores), key=lambda pair: float(pair[1]), reverse=True)
         return [
             SearchHit(
@@ -40,10 +44,16 @@ class Reranker:
                 page=hit.page,
                 chunk_index=hit.chunk_index,
                 heading_path=hit.heading_path,
+                chunk_id=hit.chunk_id,
+                score_kind="rerank",
                 score=float(score),
             )
             for hit, score in ranked
         ]
+
+    def warmup(self) -> None:
+        """Run one tiny prediction so the first real query is not penalized."""
+        self._model.predict([("warmup", "warmup")], batch_size=1, show_progress_bar=False)
 
 
 @lru_cache(maxsize=1)

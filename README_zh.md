@@ -111,6 +111,8 @@ python ingest.py data/raw/NeoForge-version-1.21.1 --collection neoforge --reset
 | `EMBED_MODEL` | `BAAI/bge-m3` | 向量模型 |
 | `HF_HUB_OFFLINE` | `true` | 只使用本地模型缓存 |
 | `CHUNK_SIZE` | `900` | 目标块大小（字符） |
+| `HYBRID_ENABLED` | `false` | 是否启用 dense + BM25 混合检索 |
+| `RERANK_ENABLED` | `false` | 是否启用 cross-encoder 精排 |
 | `MCP_TRANSPORT` | `streamable-http` | `streamable-http` / `stdio` |
 | `MCP_HOST` | `127.0.0.1` | HTTP 监听地址 |
 | `MCP_PORT` | `8000` | HTTP 端口 |

@@ -111,6 +111,8 @@ Ingestion semantics:
 | `EMBED_MODEL` | `BAAI/bge-m3` | Embedding model |
 | `HF_HUB_OFFLINE` | `true` | Use the local model cache only |
 | `CHUNK_SIZE` | `900` | Target chunk size (characters) |
+| `HYBRID_ENABLED` | `false` | Enable dense + BM25 hybrid retrieval |
+| `RERANK_ENABLED` | `false` | Enable cross-encoder reranking |
 | `MCP_TRANSPORT` | `streamable-http` | `streamable-http` / `stdio` |
 | `MCP_HOST` | `127.0.0.1` | HTTP bind address |
 | `MCP_PORT` | `8000` | HTTP port |

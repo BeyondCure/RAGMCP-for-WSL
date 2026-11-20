@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 import threading
-from typing import Any
+from typing import Annotated, Any
 
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
 from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from costume_mcp import __version__
 from costume_mcp.config import get_settings
@@ -20,13 +21,16 @@ logger = logging.getLogger(__name__)
 # sentence-transformers models are not designed for concurrent encode calls.
 _SEARCH_LOCK = threading.Lock()
 
+NEOFORGE_DOCS_COLLECTION = "neoforge"
+REQUIRED_COLLECTIONS = (NEOFORGE_DOCS_COLLECTION,)
+
 SERVER_INSTRUCTIONS = (
     "Local retrieval-augmented generation service over NeoForge 1.21.1 documentation. "
-    "Use search_knowledge for questions about NeoForge APIs, registries, resources, and mod "
-    "development. Results are markdown passages with a source file and heading path; cite both "
-    "when answering. Use list_collections to discover available collections. The default "
-    "collection is configured by MCP_DEFAULT_COLLECTION (neoforge). Re-indexing is performed "
-    "offline with ingest.py and requires a server restart."
+    "For NeoForge questions, use search_neoforge_1_21_1_dev_docs. Use search_knowledge "
+    "for other collections or as a generic template. Results are markdown passages with a "
+    "source file and heading path; cite both when answering. Use list_collections to "
+    "discover available collections. Re-indexing is performed offline with ingest.py and "
+    "requires a server restart."
 )
 
 
@@ -62,7 +66,6 @@ def _collection_stats(collection: Any) -> tuple[int, int, int]:
 
 def create_server() -> MCPServer:
     settings = get_settings()
-    default_collection = settings.mcp_default_collection
     default_top_k = settings.top_k
     max_top_k = settings.mcp_max_top_k
     max_result_chars = settings.mcp_max_result_chars
@@ -76,27 +79,12 @@ def create_server() -> MCPServer:
         log_level="INFO",
     )
 
-    @server.tool(
-        name="search_knowledge",
-        description=(
-            "Search the local NeoForge 1.21.1 documentation index. Returns the most relevant "
-            "documentation chunks with source file, heading path, and similarity score. Use this "
-            "for questions about NeoForge APIs, blocks, items, registries, networking, resources, "
-            "or mod development. Cite the returned source and heading path in your answer."
-        ),
-        annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
-        structured_output=False,
-    )
-    def search_knowledge(
-        query: str,
-        top_k: int = default_top_k,
-        collection: str = default_collection,
-    ) -> str:
+    def run_search(query: str, collection: str, top_k: int | None) -> str:
         query = (query or "").strip()
         if not query:
             raise ToolError("query must be a non-empty string")
 
-        collection = (collection or default_collection).strip()
+        collection = (collection or "").strip()
         _require_collection(collection)
 
         requested_top_k = default_top_k if top_k is None else int(top_k)
@@ -125,11 +113,68 @@ def create_server() -> MCPServer:
         return f"collection: {collection} | {len(hits)} hit(s)\n\n{body}"
 
     @server.tool(
+        name="search_knowledge",
+        description=(
+            "Generic documentation search across local RAG collections. Prefer "
+            "search_neoforge_1_21_1_dev_docs for NeoForge 1.21.1 questions; use this tool "
+            "for other collections or as a reusable template. Returns relevant passages "
+            "with source file, heading path, and similarity score."
+        ),
+        annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+        structured_output=False,
+    )
+    def search_knowledge(
+        query: str,
+        top_k: int = default_top_k,
+        collection: str = NEOFORGE_DOCS_COLLECTION,
+    ) -> str:
+        return run_search(query, collection, top_k)
+
+    @server.tool(
+        name="search_neoforge_1_21_1_dev_docs",
+        description=(
+            "Search the local NeoForge 1.21.1 mod-development documentation. Use this tool "
+            "before answering questions about NeoForge APIs, blocks, items, registries, "
+            "capabilities, networking, resources, datagen, or game events. Do not use it for "
+            "other Minecraft versions, vanilla Minecraft, other mod loaders, or non-NeoForge "
+            "topics. Returns the most relevant documentation passages with source file, "
+            "heading path, and similarity score. Cite source and heading path exactly as "
+            "returned; if the passages do not cover the question, say so instead of guessing. "
+            'Example query: "How do I register a block with DeferredRegister?"'
+        ),
+        annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
+        structured_output=False,
+    )
+    def search_neoforge_1_21_1_dev_docs(
+        query: Annotated[
+            str,
+            Field(
+                description=(
+                    "Natural-language question or keywords. Include exact NeoForge class, "
+                    "method, or registry names when known (e.g. DeferredRegister, "
+                    "Block#useItemOn). English queries usually retrieve best; Chinese is "
+                    "also supported. "
+                    'Example: "How do I register a block with DeferredRegister?"'
+                )
+            ),
+        ],
+        top_k: Annotated[
+            int,
+            Field(
+                description=(
+                    "Number of passages to return, 1-10. Default 5. Use 3-5 for precise API "
+                    "questions and 8-10 for broad overviews."
+                )
+            ),
+        ] = default_top_k,
+    ) -> str:
+        return run_search(query, NEOFORGE_DOCS_COLLECTION, top_k)
+
+    @server.tool(
         name="list_collections",
         description=(
             "List the available local RAG collections with chunk counts, document counts, and "
-            "heading-path coverage. Use this to discover which collection to pass to "
-            "search_knowledge."
+            "heading-path coverage. Use this to discover which collection to search."
         ),
         annotations=ToolAnnotations(read_only_hint=True, open_world_hint=False),
         structured_output=False,
@@ -147,14 +192,13 @@ def create_server() -> MCPServer:
         lines = ["Collections:"]
         for collection in collections:
             name = getattr(collection, "name", str(collection))
-            marker = " (default)" if name == default_collection else ""
             try:
                 chunks, documents, with_heading = _collection_stats(collection)
             except Exception as exc:  # noqa: BLE001 - keep listing other collections
-                lines.append(f"- {name}{marker}: unavailable ({exc})")
+                lines.append(f"- {name}: unavailable ({exc})")
                 continue
             lines.append(
-                f"- {name}{marker}: {chunks} chunks, "
+                f"- {name}: {chunks} chunks, "
                 f"{documents} document{'s' if documents != 1 else ''}, "
                 f"{with_heading} with heading paths"
             )

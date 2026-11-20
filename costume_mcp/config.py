@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     # Retrieval
     top_k: int = 5
     recall_top_n: int = 20
+    hybrid_enabled: bool = False
+    hybrid_dense_n: int = 20
+    hybrid_bm25_n: int = 20
+    hybrid_rerank_n: int = 15
+    hybrid_rrf_k: int = 60
     rerank_enabled: bool = False
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_max_length: int = 512
@@ -48,7 +53,6 @@ class Settings(BaseSettings):
     mcp_transport: str = "streamable-http"
     mcp_host: str = "127.0.0.1"
     mcp_port: int = 8000
-    mcp_default_collection: str = "neoforge"
     mcp_preload: bool = True
     mcp_max_top_k: int = 10
     # 0 = return full chunks (no truncation)
