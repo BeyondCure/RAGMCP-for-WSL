@@ -71,8 +71,6 @@ claude mcp add --transport http costume-rag http://localhost:8000/mcp
 
 For other MCP clients that support streamable HTTP, use `http://localhost:8000/mcp` as the server URL.
 
-Windows access to the WSL service relies on localhost forwarding. If it does not connect, set `MCP_HOST=0.0.0.0` in `.env` and restart the server.
-
 ## MCP Tools
 
 | Tool | Arguments | Description |

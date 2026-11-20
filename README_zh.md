@@ -71,8 +71,6 @@ claude mcp add --transport http costume-rag http://localhost:8000/mcp
 
 其他支持 streamable-HTTP 的 MCP 客户端，地址填 `http://localhost:8000/mcp` 即可。
 
-Windows 访问 WSL 服务依赖 localhost 转发。如果连不上，在 `.env` 中设置 `MCP_HOST=0.0.0.0` 后重启服务。
-
 ## MCP 工具
 
 | 工具 | 参数 | 说明 |
