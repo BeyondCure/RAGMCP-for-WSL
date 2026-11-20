@@ -39,6 +39,7 @@ class Reranker:
                 source=hit.source,
                 page=hit.page,
                 chunk_index=hit.chunk_index,
+                heading_path=hit.heading_path,
                 score=float(score),
             )
             for hit, score in ranked

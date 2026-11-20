@@ -14,3 +14,6 @@ data/index/
 .pytest_cache/
 .idea/
 .vscode/
+
+# Personal debug scripts (not tracked)
+costume_debug/

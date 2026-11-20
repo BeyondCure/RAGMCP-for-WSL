@@ -31,9 +31,11 @@ class Settings(BaseSettings):
     # Set to false when you need to download a model for the first time.
     hf_hub_offline: bool = True
 
-    # Chunking (characters)
-    chunk_size: int = 700
+    # Chunking (characters). Markdown code blocks may exceed chunk_size.
+    chunk_size: int = 900
     chunk_overlap: int = 100
+    min_chunk_size: int = 300
+    max_chunk_chars: int = 6000
 
     # Retrieval
     top_k: int = 5
@@ -42,10 +44,15 @@ class Settings(BaseSettings):
     rerank_model: str = "BAAI/bge-reranker-v2-m3"
     rerank_max_length: int = 512
 
-    # MCP server transport
-    mcp_transport: str = "stdio"
+    # MCP server
+    mcp_transport: str = "streamable-http"
     mcp_host: str = "127.0.0.1"
     mcp_port: int = 8000
+    mcp_default_collection: str = "neoforge"
+    mcp_preload: bool = True
+    mcp_max_top_k: int = 10
+    # 0 = return full chunks (no truncation)
+    mcp_max_result_chars: int = 0
 
 
 @lru_cache(maxsize=1)

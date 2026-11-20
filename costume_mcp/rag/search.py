@@ -19,6 +19,7 @@ class SearchHit:
     score: float
     page: int | None = None
     chunk_index: int | None = None
+    heading_path: str | None = None
 
 
 def search(
@@ -57,6 +58,7 @@ def search(
                 source=str(metadata.get("source", "unknown")),
                 page=metadata.get("page"),
                 chunk_index=metadata.get("chunk_index"),
+                heading_path=str(metadata["heading_path"]) if metadata.get("heading_path") else None,
                 score=1.0 - float(distance),
             )
         )
@@ -77,6 +79,8 @@ def format_hits(hits: list[SearchHit]) -> str:
     blocks: list[str] = []
     for index, hit in enumerate(hits, start=1):
         location = hit.source
+        if hit.heading_path:
+            location += f" › {hit.heading_path}"
         if hit.page is not None:
             location += f" · p.{hit.page}"
         blocks.append(
